@@ -1,0 +1,21 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# 런타임 (시스템마다 다름)
+data/
+*.log
+
+# 모델 파일 (혹시라도 프로젝트에 들어올 경우 차단)
+*.gguf
+*.bin
+*.safetensors
+
+# IDE / OS
+.DS_Store
+.vscode/
+.idea/
+
+# 환경 설정
+.env

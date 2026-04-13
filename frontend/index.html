@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RS sLLM Chat</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <!-- 대시보드 (모델 관리) -->
+  <section id="dashboard" class="screen">
+    <header class="topbar">
+      <div class="brand">RS sLLM Chat · 📦 모델 관리</div>
+      <div class="actions">
+        <button id="btn-back-to-chat" class="hidden">← 채팅으로</button>
+        <button id="btn-settings-dash" title="설정">⚙️</button>
+      </div>
+    </header>
+    <div class="container">
+      <h1>모델 선택 / 다운로드</h1>
+      <p class="subtitle">설치된 모델은 바로 대화 시작, 미설치 모델은 먼저 다운로드하세요</p>
+      <div id="model-grid" class="model-grid">
+        <div class="loading">모델 목록 불러오는 중...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 채팅 화면 -->
+  <section id="chat-screen" class="screen">
+    <header class="topbar">
+      <div class="brand">RS sLLM Chat</div>
+      <div class="model-picker">
+        <span class="model-icon">🤖</span>
+        <select id="model-picker-select" class="model-picker-select" title="모델 선택"></select>
+      </div>
+      <div class="actions">
+        <button id="btn-settings" title="설정">⚙️</button>
+        <button id="btn-new-chat" title="새 대화">🗑️ 새 대화</button>
+      </div>
+    </header>
+    <div id="chat-log" class="chat-log"></div>
+    <div class="input-area">
+      <textarea id="chat-input" placeholder="질문을 입력하세요 (각 질문은 독립 처리)" rows="2"></textarea>
+      <button id="btn-send">전송 ↵</button>
+      <button id="btn-stop" class="hidden">중단</button>
+    </div>
+    <div class="hint">💡 후속 질문은 동작하지 않습니다. 필요 맥락은 질문에 모두 포함하세요</div>
+  </section>
+
+  <!-- 설정 패널 -->
+  <aside id="settings-panel" class="settings-panel hidden">
+    <header>
+      <h2>⚙️ 설정</h2>
+      <button id="btn-close-settings">✕</button>
+    </header>
+    <div class="setting-group">
+      <label>🤖 모델</label>
+      <select id="settings-model"></select>
+      <small class="warn">⚠️ 모델 변경 시 화면의 Q&A 기록이 초기화됩니다</small>
+    </div>
+    <div class="setting-group">
+      <label>🎭 페르소나</label>
+      <select id="settings-persona"></select>
+    </div>
+    <div class="setting-group">
+      <label><input type="checkbox" id="settings-show-monitor" checked> 응답 중 시스템 정보 표시</label>
+    </div>
+    <div class="setting-group">
+      <button id="btn-manage-models" style="width:100%;padding:10px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px;cursor:pointer;">📦 모델 관리 / 다운로드</button>
+    </div>
+  </aside>
+
+  <!-- 모델 변경 확인 모달 -->
+  <div id="modal-change" class="modal hidden">
+    <div class="modal-body">
+      <h3>🔄 모델 변경</h3>
+      <p><strong id="modal-from">—</strong> → <strong id="modal-to">—</strong></p>
+      <p>화면의 Q&A 기록이 초기화됩니다.</p>
+      <p class="muted">저장되지 않으니 필요한 내용은 미리 복사해 주세요.</p>
+      <label class="checkbox"><input type="checkbox" id="modal-skip"> 다시 묻지 않기</label>
+      <div class="modal-actions">
+        <button id="modal-cancel">취소</button>
+        <button id="modal-confirm" class="primary">변경하기</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/monitor.js"></script>
+  <script src="/js/chat.js"></script>
+  <script src="/js/models.js"></script>
+  <script src="/js/personas.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
