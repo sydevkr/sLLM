@@ -53,8 +53,9 @@ fi
 echo
 echo "[3/5] Python 가상환경 구성..."
 if [ ! -d .venv ]; then
-  python3 -m venv .venv
-  echo "   → .venv 생성됨"
+  # --system-site-packages: Hailo SDK (hailo_platform, cv2, numpy)를 시스템에서 상속
+  python3 -m venv --system-site-packages .venv
+  echo "   → .venv 생성됨 (system-site-packages 포함)"
 fi
 ./.venv/bin/pip install --upgrade pip --quiet
 ./.venv/bin/pip install -r backend/requirements.txt --quiet
@@ -121,6 +122,38 @@ else
 fi
 
 # ────────────────────────────────────────────────
+# [6/6] VLM 모델 다운로드 (Hailo NPU 감지 시)
+# ────────────────────────────────────────────────
+echo
+echo "[6/6] VLM 모델 확인..."
+if [ -e /dev/hailo0 ]; then
+  # VLM HEF 모델 (hailo-apps의 자동 다운로드에 의존)
+  HEF_PATH="/usr/local/hailo/resources/models/hailo10h/Qwen2-VL-2B-Instruct.hef"
+  if [ -f "$HEF_PATH" ]; then
+    echo "   ✓ VLM 모델 존재: $HEF_PATH"
+  else
+    echo "   → VLM 모델 자동 다운로드 시도 (첫 실행 시 자동 다운로드됨)"
+    HAILO_APPS_DIR="$HOME/hailo-apps"
+    if [ -d "$HAILO_APPS_DIR/venv" ]; then
+      "$HAILO_APPS_DIR/venv/bin/python" -m hailo_apps.python.gen_ai_apps.simple_vlm_chat.simple_vlm_chat --list-models 2>/dev/null || true
+      echo "   ℹ️ VLM 모델은 첫 분석 요청 시 자동 다운로드됩니다"
+    fi
+  fi
+
+  # 번역 모델 (ollama exaone)
+  if command -v ollama >/dev/null 2>&1; then
+    if ollama list 2>/dev/null | grep -q "exaone3.5:2.4b"; then
+      echo "   ✓ 번역 모델 존재: exaone3.5:2.4b"
+    else
+      echo "   → 번역 모델 다운로드: exaone3.5:2.4b (~1.6GB)"
+      ollama pull exaone3.5:2.4b || echo "   ⚠️ exaone3.5:2.4b pull 실패"
+    fi
+  fi
+else
+  echo "   ℹ️ Hailo NPU 미감지 — VLM 모델 다운로드 스킵"
+fi
+
+# ────────────────────────────────────────────────
 # 완료 리포트
 # ────────────────────────────────────────────────
 DISK_FREE=$(df --output=avail -BG / 2>/dev/null | tail -1 | tr -dc '0-9' || echo "?")
@@ -129,7 +162,11 @@ echo
 echo "=========================================="
 echo "   ✅ 빌드 완료"
 echo "   HW: RAM ${RAM_GB}GB · 디스크 여유 ${DISK_FREE}GB"
+if [ -e /dev/hailo0 ]; then
+echo "   VLM: Hailo NPU 감지됨 (이미지 분석 가능)"
+fi
 echo
 echo "   실행: bash start.sh"
-echo "   접속: http://<IP>:8000"
+echo "   LLM 채팅: http://<IP>:8000"
+echo "   VLM 분석: http://<IP>:8000/vlm"
 echo "=========================================="

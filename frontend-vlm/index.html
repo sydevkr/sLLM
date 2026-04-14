@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RS sLLM - VLM 이미지 분석</title>
+  <link rel="stylesheet" href="/vlm/css/app.css?v=1">
+</head>
+<body>
+  <!-- 메인 화면 -->
+  <section id="vlm-screen" class="screen active">
+    <header class="topbar">
+      <div class="brand">RS sLLM Chat &middot; VLM 이미지 분석</div>
+      <div class="actions">
+        <a href="/" class="btn-link" title="sLLM 채팅으로">LLM 채팅</a>
+      </div>
+    </header>
+
+    <!-- Hailo 상태 배너 -->
+    <div id="hailo-status" class="hailo-status loading">
+      <span class="status-icon"></span>
+      <span class="status-text">Hailo NPU 확인 중...</span>
+    </div>
+
+    <div class="vlm-layout">
+      <!-- 왼쪽: 이미지 업로드 -->
+      <div class="upload-panel">
+        <div id="drop-zone" class="drop-zone">
+          <div class="drop-content">
+            <div class="drop-icon">+</div>
+            <p>이미지를 드래그하거나 클릭하여 업로드</p>
+            <small>JPEG, PNG, WebP (최대 10MB)</small>
+          </div>
+          <img id="preview-img" class="preview-img hidden" alt="미리보기">
+          <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" hidden>
+        </div>
+        <div id="image-info" class="image-info hidden">
+          <span id="image-name"></span>
+          <span id="image-size"></span>
+          <button id="btn-clear-image" class="btn-clear" title="이미지 제거">x</button>
+        </div>
+      </div>
+
+      <!-- 오른쪽: 프롬프트 + 결과 -->
+      <div class="result-panel">
+        <div class="prompt-area">
+          <textarea id="vlm-prompt" placeholder="분석 요청 입력 (예: What is in this image?)" rows="3">Describe this image.</textarea>
+          <button id="btn-analyze" disabled>분석 시작</button>
+          <button id="btn-stop" class="hidden">중단</button>
+        </div>
+        <div id="result-log" class="result-log">
+          <div class="placeholder-text">이미지를 업로드하고 분석 버튼을 누르세요</div>
+        </div>
+        <!-- 모니터 바 -->
+        <div id="monitor-bar" class="monitor-bar hidden">
+          <span class="status"></span>
+          <span class="metrics"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="/vlm/js/api.js?v=1"></script>
+  <script src="/vlm/js/monitor.js?v=1"></script>
+  <script src="/vlm/js/vlm.js?v=1"></script>
+  <script src="/vlm/js/app.js?v=1"></script>
+</body>
+</html>

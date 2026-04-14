@@ -87,10 +87,41 @@ else
 fi
 
 # ────────────────────────────────────────────────
-# [5/5] ngrok 설치 (선택 — 외부 접근 터널)
+# [5/7] Hailo VLM 환경 설치 (AI HAT+ 2 장착 시스템만 해당)
 # ────────────────────────────────────────────────
 echo
-echo "[5/5] ngrok 설치 확인..."
+echo "[5/7] Hailo VLM 환경 확인..."
+if [ -e /dev/hailo0 ]; then
+  echo "   ✓ Hailo NPU 감지됨"
+
+  # hailo-apps 클론
+  HAILO_APPS_DIR="$HOME/hailo-apps"
+  if [ -d "$HAILO_APPS_DIR/hailo_apps" ]; then
+    echo "   ✓ hailo-apps 이미 설치됨: $HAILO_APPS_DIR"
+  else
+    echo "   → hailo-apps 클론 중..."
+    git clone https://github.com/hailo-ai/hailo-apps "$HAILO_APPS_DIR" 2>&1 | tail -3
+    echo "   ✓ hailo-apps 클론 완료"
+  fi
+
+  # hailo-apps venv + pip install
+  if [ ! -d "$HAILO_APPS_DIR/venv" ]; then
+    echo "   → hailo-apps 가상환경 생성 및 설치..."
+    python3 -m venv --system-site-packages "$HAILO_APPS_DIR/venv"
+    "$HAILO_APPS_DIR/venv/bin/pip" install -e "$HAILO_APPS_DIR" --quiet 2>&1 | tail -3
+    echo "   ✓ hailo-apps 설치 완료"
+  else
+    echo "   ✓ hailo-apps venv 이미 존재"
+  fi
+else
+  echo "   ℹ️ Hailo NPU 미감지 — VLM 기능 사용 불가 (AI HAT+ 2 필요)"
+fi
+
+# ────────────────────────────────────────────────
+# [6/7] ngrok 설치 (선택 — 외부 접근 터널)
+# ────────────────────────────────────────────────
+echo
+echo "[6/7] ngrok 설치 확인..."
 if command -v ngrok >/dev/null 2>&1; then
   echo "   ✓ ngrok 이미 설치됨: $(ngrok version 2>&1 | head -1)"
 else
@@ -117,9 +148,17 @@ else
   fi
 fi
 
+# ────────────────────────────────────────────────
+# [7/7] 설치 요약
+# ────────────────────────────────────────────────
 echo
 echo "=========================================="
 echo "   ✅ 시스템 의존성 설치 완료"
+if [ -e /dev/hailo0 ]; then
+echo "   Hailo NPU: 감지됨 (VLM 사용 가능)"
+else
+echo "   Hailo NPU: 미감지 (LLM 채팅만 사용 가능)"
+fi
 echo
 echo "   다음 단계: bash build.sh"
 echo "=========================================="

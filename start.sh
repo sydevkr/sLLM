@@ -14,23 +14,27 @@ if [ ! -d .venv ]; then
   exit 1
 fi
 
-# ollama 확인
-if ! curl -sf http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
-  echo "→ ollama 서비스 시작..."
-  if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files | grep -q ollama; then
-    sudo systemctl start ollama 2>/dev/null || nohup ollama serve >/tmp/ollama.log 2>&1 &
-  else
-    nohup ollama serve >/tmp/ollama.log 2>&1 &
+# ollama 확인 (미설치 시 스킵 — VLM 전용 모드에서는 불필요)
+if command -v ollama >/dev/null 2>&1; then
+  if ! curl -sf http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+    echo "→ ollama 서비스 시작..."
+    if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files | grep -q ollama; then
+      sudo systemctl start ollama 2>/dev/null || nohup ollama serve >/tmp/ollama.log 2>&1 &
+    else
+      nohup ollama serve >/tmp/ollama.log 2>&1 &
+    fi
+    for i in $(seq 1 20); do
+      if curl -sf http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then break; fi
+      sleep 1
+    done
   fi
-  for i in $(seq 1 20); do
-    if curl -sf http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then break; fi
-    sleep 1
-  done
+else
+  echo "ℹ️  ollama 미설치 — LLM 채팅은 ollama 설치 후 사용 가능"
 fi
 
 IP=$(hostname -I 2>/dev/null | awk '{print $1}')
 PORT=${PORT:-8000}
-NGROK=${NGROK:-1}
+NGROK=${NGROK:-0}
 NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN:-3BcBA7fLH1ixUNQkQaPl388xYiP_7wHZsfjhorTXYDqujQbCZ}
 
 # ── ngrok 터널 (NGROK=0 으로 끌 수 있음, 기본 ON) ──
@@ -72,10 +76,12 @@ fi
 
 echo "=========================================="
 echo "  sLLM Chat 서버 시작"
-echo "  LAN:  http://${IP:-localhost}:${PORT}"
-echo "  API:  http://${IP:-localhost}:${PORT}/docs"
+echo "  LLM 채팅: http://${IP:-localhost}:${PORT}"
+echo "  VLM 분석: http://${IP:-localhost}:${PORT}/vlm"
+echo "  API 문서: http://${IP:-localhost}:${PORT}/docs"
 if [ -n "$NGROK_URL" ]; then
-  echo "  외부: ${NGROK_URL}"
+  echo "  외부:     ${NGROK_URL}"
+  echo "  외부 VLM: ${NGROK_URL}/vlm"
   echo ""
   echo "  ⚠️ ngrok 무료 플랜: 월 1GB / 20,000 요청 제한"
 fi
