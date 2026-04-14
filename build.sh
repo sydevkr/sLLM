@@ -90,11 +90,11 @@ echo
 echo "[5/5] 모델 다운로드..."
 MODELS=()
 if [ "${SLLM_PULL_BASIC:-0}" = "1" ]; then
-  MODELS+=("exaone3.5:2.4b" "qwen3:1.7b" "gemma3:1b")
+  MODELS+=("exaone3.5:2.4b" "gemma3:1b" "qwen2.5:1.5b")
   echo "   (SLLM_PULL_BASIC=1 — 기본 3종 다운로드)"
 fi
 if [ "${SLLM_PULL_LARGE:-0}" = "1" ]; then
-  MODELS+=("exaone3.5:7.8b" "qwen3:8b")
+  MODELS+=("exaone3.5:7.8b" "qwen2.5:7b")
   echo "   (SLLM_PULL_LARGE=1 — 7B급 추가)"
 fi
 

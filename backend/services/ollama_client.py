@@ -44,6 +44,20 @@ class OllamaClient:
             log.debug(f"설치된 ollama 모델 {len(models)}종")
             return models
 
+    async def load_model(self, model: str) -> dict:
+        """모델을 메모리에 미리 로드 (프롬프트 없이 generate 호출)."""
+        t_start = time.time()
+        log.info(f"→ [ollama.load] model={model} preload 시작")
+        async with httpx.AsyncClient(timeout=None) as c:
+            r = await c.post(f"{self.base_url}/api/generate", json={"model": model})
+            if r.status_code == 404:
+                raise ModelNotFoundError(f"모델 '{model}' 미설치")
+            r.raise_for_status()
+            result = r.json()
+        elapsed = time.time() - t_start
+        log.info(f"← [ollama.load] model={model} preload 완료 ({elapsed:.2f}s)")
+        return {"model": model, "load_sec": round(elapsed, 2)}
+
     async def generate_stream(
         self,
         model: str,

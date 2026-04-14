@@ -88,3 +88,12 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Sego
 .modal-actions button { padding: 8px 16px; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; cursor: pointer; }
 .modal-actions button.primary { background: #3b82f6; color: #fff; border-color: #3b82f6; }
 .loading { padding: 40px; text-align: center; color: #6b7280; }
+
+/* 모델 변경 시 로딩 인디케이터 */
+.model-loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 40px 20px; color: #92400e; font-size: 0.95rem; }
+.model-loading .loading-elapsed { color: #9ca3af; font-size: 0.85rem; }
+.loading-spinner { width: 20px; height: 20px; border: 3px solid #fde68a; border-top-color: #f59e0b; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 채팅 TTFT 로딩 상태 */
+.msg .monitor.loading { background: #fef3c7; color: #92400e; border-color: #fde68a; animation: pulse-monitor 1.5s ease-in-out infinite; }

@@ -32,7 +32,7 @@ const App = {
     this.autoSelectAndOpen();
   },
   // 접속 직후 자동 모델 선택 → 채팅 화면 진입
-  autoSelectAndOpen() {
+  async autoSelectAndOpen() {
     const installed = Models.all.filter((m) => m.is_installed && Models.isCompatible(m));
     if (installed.length === 0) {
       // 설치된 모델 없음 → 모델 관리(대시보드)로 안내. 첫 사용자에게 명확한 안내 표시.
@@ -52,7 +52,7 @@ const App = {
     let target = installed.find((m) => m.default);
     // 2순위: 한국어 점수 높은 순
     if (!target) target = [...installed].sort((a, b) => (b.korean_level || 0) - (a.korean_level || 0))[0];
-    this.selectModel(target.id);
+    await this.selectModel(target.id);
   },
   showScreen(name) {
     document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
@@ -61,7 +61,7 @@ const App = {
     const backBtn = document.getElementById('btn-back-to-chat');
     if (backBtn) backBtn.classList.toggle('hidden', !(name === 'dashboard' && this.state.currentModelId));
   },
-  selectModel(modelId) {
+  async selectModel(modelId) {
     this.state.currentModelId = modelId;
     this.state.currentModel = Models.get(modelId);
     // 두 select 모두 동기화 (상단 model-picker + 우측 설정 패널)
@@ -71,6 +71,45 @@ const App = {
     if (mp) mp.value = modelId;
     Chat.clear();
     this.showScreen('chat-screen');
+
+    // 모델 프리로드 — 입력 비활성화 + 로딩 표시
+    Chat.input.disabled = true;
+    Chat.sendBtn.disabled = true;
+    Chat.input.placeholder = '모델 로딩 중...';
+
+    const loadingEl = document.createElement('div');
+    loadingEl.id = 'model-loading-indicator';
+    loadingEl.className = 'model-loading';
+    loadingEl.innerHTML = `<span class="loading-spinner"></span><span class="loading-text">📦 ${this.state.currentModel?.display_name || modelId} 모델 로딩 중...</span><span class="loading-elapsed"></span>`;
+    Chat.log.appendChild(loadingEl);
+
+    const tStart = Date.now();
+    const timer = setInterval(() => {
+      const el = loadingEl.querySelector('.loading-elapsed');
+      if (el) el.textContent = `${Math.floor((Date.now() - tStart) / 1000)}초 경과`;
+    }, 1000);
+
+    try {
+      const MIN_DISPLAY_MS = 1500;
+      const [result] = await Promise.all([
+        API.loadModel(modelId),
+        new Promise(r => setTimeout(r, MIN_DISPLAY_MS)),
+      ]);
+      // 로딩 완료 표시
+      const loadingText = loadingEl.querySelector('.loading-text');
+      if (loadingText) loadingText.textContent = `✅ ${this.state.currentModel?.display_name || modelId} 모델 준비 완료`;
+      const spinner = loadingEl.querySelector('.loading-spinner');
+      if (spinner) spinner.style.display = 'none';
+      await new Promise(r => setTimeout(r, 800));
+    } catch (e) {
+      console.warn('모델 프리로드 실패:', e);
+    }
+
+    clearInterval(timer);
+    if (loadingEl.parentNode) loadingEl.remove();
+    Chat.input.disabled = false;
+    Chat.sendBtn.disabled = false;
+    Chat.input.placeholder = '질문을 입력하세요 (각 질문은 독립 처리)';
     Chat.input.focus();
   },
   requestModelChange(newId) {
@@ -108,13 +147,13 @@ const App = {
     if (mp && this.state.currentModelId) mp.value = this.state.currentModelId;
     this.state.pendingModelChange = null;
   },
-  confirmChange() {
+  async confirmChange() {
     const skip = document.getElementById('modal-skip').checked;
     if (skip) this.state.skipConfirm = true;
     const newId = this.state.pendingModelChange;
     document.getElementById('modal-change').classList.add('hidden');
     this.state.pendingModelChange = null;
-    if (newId) this.selectModel(newId);
+    if (newId) await this.selectModel(newId);
   },
   openSettings() {
     document.getElementById('settings-panel').classList.remove('hidden');

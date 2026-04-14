@@ -16,6 +16,11 @@ const API = {
     const r = await fetch('/api/system/info');
     return r.json();
   },
+  async loadModel(modelId) {
+    const r = await fetch(`/api/models/${encodeURIComponent(modelId)}/load`, { method: 'POST' });
+    if (!r.ok) throw new Error(`모델 로드 실패: ${r.status}`);
+    return r.json();
+  },
   // SSE 채팅 — 콜백:
   //   onToken(text)        : 토큰 수신
   //   onDone(meta)         : 정상 완료

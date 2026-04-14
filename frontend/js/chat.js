@@ -23,7 +23,7 @@ const Chat = {
   // 응답 박스의 monitor 요소를 상태별로 갱신
   setMonitor(el, state, statusText, metrics = '') {
     if (!el) return;
-    el.classList.remove('generating', 'done', 'error', 'stopping', 'stopped');
+    el.classList.remove('generating', 'done', 'error', 'stopping', 'stopped', 'loading');
     el.classList.add(state);
     el.querySelector('.status').textContent = statusText;
     el.querySelector('.metrics').textContent = metrics;
@@ -69,6 +69,8 @@ const Chat = {
     let tokenCount = 0;
     let lastMonitor = null;
     const tStart = Date.now();
+    let firstTokenReceived = false;
+    const LOADING_THRESHOLD_MS = 5000;
     // 라벨 포맷: "응답속도 3.6s, 토큰수 24 tok, CPU 97%, RAM 3.1GB, 온도 68℃"
     const formatLabeled = (timeStr, tokStr, sys) => {
       const cpu = sys?.cpu_percent != null ? `${sys.cpu_percent.toFixed(0)}%` : '—';
@@ -77,7 +79,7 @@ const Chat = {
       return `응답속도 ${timeStr}, 토큰수 ${tokStr}, CPU ${cpu}, RAM ${ram}, 온도 ${temp}`;
     };
 
-    this.setMonitor(monEl, 'generating', '🧠 생성 중', formatLabeled('—', '—', null));
+    this.setMonitor(monEl, 'generating', '🧠 생성 중', formatLabeled('경과 0.0s', '—', null));
     Monitor.start((s) => {
       lastMonitor = s;
       // 중단 중 상태일 때는 generating으로 덮어쓰지 말고 중단 중 라이브 메트릭만 갱신
@@ -85,8 +87,16 @@ const Chat = {
         const elapsedNow = `${((Date.now() - tStart) / 1000).toFixed(1)}s`;
         const tokStr = `${tokenCount} tok (중단 중)`;
         this.setMonitor(monEl, 'stopping', '⏹️ 중단 중...', formatLabeled(elapsedNow, tokStr, s));
+      } else if (!firstTokenReceived) {
+        const elapsedMs = Date.now() - tStart;
+        const elapsedStr = `경과 ${(elapsedMs / 1000).toFixed(1)}s`;
+        if (elapsedMs >= LOADING_THRESHOLD_MS) {
+          this.setMonitor(monEl, 'loading', '⏳ 응답 대기 중...', formatLabeled(elapsedStr, '—', s));
+        } else {
+          this.setMonitor(monEl, 'generating', '🧠 생성 중', formatLabeled(elapsedStr, '—', s));
+        }
       } else {
-        this.setMonitor(monEl, 'generating', '🧠 생성 중', formatLabeled('—', '—', s));
+        this.setMonitor(monEl, 'generating', '🧠 생성 중', formatLabeled('—', `${tokenCount} tok`, s));
       }
     });
 
@@ -107,6 +117,10 @@ const Chat = {
       },
       {
         onToken: (t) => {
+          if (!firstTokenReceived) {
+            firstTokenReceived = true;
+            this.setMonitor(monEl, 'generating', '🧠 생성 중', formatLabeled('—', '—', lastMonitor));
+          }
           acc += t;
           tokenCount += 1;
           bodyEl.textContent = acc;

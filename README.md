@@ -53,8 +53,8 @@ SLLM_PULL_LARGE=1 bash build.sh
 
 기본 3종:
 - `exaone3.5:2.4b` (한국어 ★★★★★, 1.6GB)
-- `qwen3:1.7b` (다국어 경량, 1.2GB)
 - `gemma3:1b` (초경량 빠른 응답, 815MB)
+- `qwen2.5:1.5b` (다국어 경량, 1.0GB)
 
 ---
 

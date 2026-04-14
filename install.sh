@@ -11,7 +11,7 @@ echo "   sLLM 시스템 의존성 설치"
 echo "=========================================="
 
 # ────────────────────────────────────────────────
-# [1/4] OS 패키지 매니저 감지
+# [1/5] OS 패키지 매니저 감지
 # ────────────────────────────────────────────────
 if command -v apt-get >/dev/null 2>&1; then
   PKG_MGR="apt"
@@ -26,13 +26,13 @@ else
   echo "   수동 설치 필요: curl, python3 (3.11+), python3-venv, python3-pip"
   exit 1
 fi
-echo "[1/4] 패키지 매니저: $PKG_MGR"
+echo "[1/5] 패키지 매니저: $PKG_MGR"
 
 # ────────────────────────────────────────────────
-# [2/4] 필수 패키지 설치
+# [2/5] 필수 패키지 설치
 # ────────────────────────────────────────────────
 echo
-echo "[2/4] 필수 패키지 설치 중..."
+echo "[2/5] 필수 패키지 설치 중..."
 
 case "$PKG_MGR" in
   apt)
@@ -48,10 +48,10 @@ case "$PKG_MGR" in
 esac
 
 # ────────────────────────────────────────────────
-# [3/4] Python 버전 확인
+# [3/5] Python 버전 확인
 # ────────────────────────────────────────────────
 echo
-echo "[3/4] Python 검증..."
+echo "[3/5] Python 검증..."
 if ! command -v python3 >/dev/null 2>&1; then
   echo "✗ python3 설치 실패"
   exit 1
@@ -66,10 +66,10 @@ python3 -c "import venv" 2>/dev/null || { echo "✗ python3-venv 모듈 없음";
 echo "   ✓ venv 모듈 OK"
 
 # ────────────────────────────────────────────────
-# [4/4] Ollama 설치 (선택 — build.sh에서도 시도하나 미리 깔아두면 빌드 빨라짐)
+# [4/5] Ollama 설치 (선택 — build.sh에서도 시도하나 미리 깔아두면 빌드 빨라짐)
 # ────────────────────────────────────────────────
 echo
-echo "[4/4] Ollama 설치 확인..."
+echo "[4/5] Ollama 설치 확인..."
 if command -v ollama >/dev/null 2>&1; then
   echo "   ✓ Ollama 이미 설치됨: $(ollama --version 2>&1 | head -1)"
 else
@@ -83,6 +83,37 @@ else
   else
     echo "   수동 설치 필요: https://ollama.com"
     exit 1
+  fi
+fi
+
+# ────────────────────────────────────────────────
+# [5/5] ngrok 설치 (선택 — 외부 접근 터널)
+# ────────────────────────────────────────────────
+echo
+echo "[5/5] ngrok 설치 확인..."
+if command -v ngrok >/dev/null 2>&1; then
+  echo "   ✓ ngrok 이미 설치됨: $(ngrok version 2>&1 | head -1)"
+else
+  echo "   → ngrok 미설치. 설치 시도..."
+  if [ "$(uname -s)" = "Linux" ]; then
+    ARCH=$(uname -m)
+    if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+      NGROK_ARCH="arm64"
+    elif [ "$ARCH" = "x86_64" ]; then
+      NGROK_ARCH="amd64"
+    else
+      echo "   ⚠️ 미지원 아키텍처: $ARCH — 수동 설치 필요: https://ngrok.com/download"
+      NGROK_ARCH=""
+    fi
+    if [ -n "$NGROK_ARCH" ]; then
+      curl -fsSL "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-${NGROK_ARCH}.tgz" \
+        | sudo tar xz -C /usr/local/bin
+      echo "   ✓ ngrok 설치 완료: $(ngrok version 2>&1 | head -1)"
+    fi
+  elif [ "$(uname -s)" = "Darwin" ]; then
+    echo "   macOS: brew install ngrok 으로 설치하세요"
+  else
+    echo "   수동 설치 필요: https://ngrok.com/download"
   fi
 fi
 

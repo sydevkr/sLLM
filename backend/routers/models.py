@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from services.ollama_client import ollama
+from services.ollama_client import ollama, ModelNotFoundError
 from services import model_registry
 
 router = APIRouter()
@@ -65,3 +65,14 @@ async def pull_model(model_id: str):
             yield f"data: {json.dumps(err, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@router.post("/models/{model_id:path}/load")
+async def load_model(model_id: str):
+    """모델을 메모리에 미리 로드."""
+    log.info(f"━━ /api/models/{model_id}/load 요청 수신")
+    try:
+        result = await ollama.load_model(model_id)
+        return result
+    except ModelNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))

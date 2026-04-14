@@ -34,20 +34,12 @@ async def chat(req: ChatRequest):
         else:
             log.warning(f"요청한 persona_id 미존재: {req.persona_id}")
 
-    # Qwen 3 계열은 thinking mode가 기본 ON이라 응답이 5~10배 길고 느림.
-    # /no_think 지시자를 프롬프트 앞에 자동 주입해 thinking을 건너뛰고 바로 답변하게 한다.
-    # (Qwen 3 dense 모델 공식 지원 기능, Qwen 2.5/EXAONE/Gemma 등엔 영향 없음)
     effective_prompt = req.prompt
-    no_think_applied = False
-    if req.model.startswith("qwen3:"):
-        effective_prompt = f"/no_think {req.prompt}"
-        no_think_applied = True
 
     # 요청 요약 로그 (전체 prompt는 너무 길 수 있으므로 앞 40자만)
     preview = req.prompt[:40].replace("\n", " ")
-    nt_tag = " [no_think]" if no_think_applied else ""
     log.info(
-        f"━━ /api/chat 요청 수신: model={req.model}{nt_tag} "
+        f"━━ /api/chat 요청 수신: model={req.model} "
         f"persona={persona_name or '(없음)'} prompt_len={len(req.prompt)} preview='{preview}…'"
     )
 
